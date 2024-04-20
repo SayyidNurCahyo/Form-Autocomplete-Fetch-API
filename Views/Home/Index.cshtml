@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width" />
+	<title>ILCS_Final_Test</title>
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0/js/select2.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" />
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<script>
+		$(document).ready(function () {
+			let storeNegara
+			let storeBarang
+			let hs_code
+			$('#productName').autocomplete({
+				source: function (request, response) {
+					let term = request.term;
+					$.ajax({
+						url: "https://localhost:7127/Home/Search?term=" + term,
+						dataType: "json",
+						success: function (data) {
+							response(data);
+						}
+					});
+				},
+				minLength: 3
+			})
+			$('#negara').autocomplete({
+				source: function (request, response) {
+					let term = request.term.toUpperCase();
+					$.ajax({
+						url: "https://insw-dev.ilcs.co.id/n/negara?ur_negara=" + term,
+						dataType: "json",
+						success: function (data) {
+							storeNegara = data
+							response(data.map(x => x.negara.toUpperCase()))
+						}
+					});
+				},
+				minLength: 3,
+				select: function (event, ui) {
+					storeNegara = storeNegara.filter(x => x.negara.toUpperCase() === ui.item.value)[0];
+				}
+			})
+			$('#pelabuhan').autocomplete({
+				source: function (request, response) {
+					let term = request.term.toLowerCase();
+					$.ajax({
+						url: "https://insw-dev.ilcs.co.id/n/pelabuhan?kd_negara=" + storeNegara.kd_negara + "&ur_pelabuhan=" + term,
+						dataType: "json",
+						success: function (data) {
+							response(data.map(x => x.pelabuhan.toUpperCase()))
+						}
+					});
+				},
+				minLength: 3
+			})
+
+			$('#kodeBarang').autocomplete({
+				source: function (request, response) {
+					let term = request.term;
+					$.ajax({
+						url: "https://insw-dev.ilcs.co.id/n/barang?hs_code=" + term,
+						dataType: "json",
+						success: function (data) {
+							if (data) {
+								$('#barang').val(data[0].barang)
+							}
+						}
+					});
+				}
+			})
+
+			$('#kodeBarang').autocomplete({
+				source: function (request, response) {
+					hs_code = request.term;
+					$.ajax({
+						url: "https://insw-dev.ilcs.co.id/n/barang?hs_code=" + hs_code,
+						dataType: "json",
+						success: function (data) {
+							if (data) {
+								$('#barang').val(data[0].barang)
+							}
+						}
+					});
+				}
+			})
+
+			$("#harga").autocomplete({
+				source: function (request, response) {
+					let term = toCurrency(request.term.replace(/\D/g, ""));
+					$.ajax({
+						url: "https://insw-dev.ilcs.co.id/n/tarif?hs_code=" + hs_code,
+						method: "GET",
+						dataType: "json",
+						success: function (data) {
+							if (data) {
+								const price = data.rate;
+								$("#persentase").val(price);
+								$("#tarif").val(toCurrency(term * (price / 100)));
+							}
+						}
+					});
+				}
+			});
+		})</script>
+</head>
+<body>
+	<header>
+		<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+			<div class="container-fluid">
+				<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ILCS_Test</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+						aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+					<ul class="navbar-nav flex-grow-1">
+						<li class="nav-item">
+							<a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+	</header>
+	<div class="container">
+		<main role="main">
+			<div class="p-4 pb-3 w-100 flex-grow-1">
+				<form class="shadow-sm p-4 rounded-2">
+					<h3 class="d-flex justify-content-center">Form Autocomplete ILCS-Final Test</h3>
+					<div class="mb-3">
+						<label class="form-label">
+							<h5>Negara</h5>
+						</label>
+						<input type="text" id="negara" placeholder="input value" class="form-control" />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">
+							<h5>Pelabuhan</h5>
+						</label>
+						<input type="text" id="pelabuhan" placeholder="input value" class="form-control" />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">
+							<h5>Barang</h5>
+						</label>
+						<input type="text" id="kodeBarang" placeholder="input value" class="form-control" />
+						<textarea type="text" id="barang" placeholder="input value" class="form-control mt-2"></textarea>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">
+							<h5>Harga</h5>
+						</label>
+						<input type="number" id="harga" placeholder="input value" class="form-control" />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">
+							<h5>Tarif Bea Masuk</h5>
+						</label>
+						<input type="number" id="persentase" placeholder="input value (%)" class="form-control" />
+						<input type="number" id="tarif" placeholder="input value" class="form-control mt-2" />
+					</div>
+				</form>
+			</div>
+		</main>
+	</div>
+	<footer class="border-top footer text-muted">
+		<div class="container">
+			&copy; 2024 - ILCS_Test
+		</div>
+	</footer>
+</body>
+</html>
